@@ -1,0 +1,5 @@
+server.port: 8085
+
+other-service:
+  ribbon:
+    listOfServers: http://localhost:${wiremock.server.port}
