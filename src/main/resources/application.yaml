@@ -1,5 +1,25 @@
 server.port: 8085
-
 other-service:
   ribbon:
     listOfServers: http://localhost:${wiremock.server.port}
+feign:
+  hystrix:
+    enabled: true
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          strategy: SEMAPHORE
+#          thread:
+#            timeoutInMilliseconds: 5000
+#            readTimeout: 5000
+#      fallback:
+#        isolation:
+#          semaphore:
+#            maxConcurrentRequests: 200
+#            errorThresholdPercentage: 80
+#            forceClosed: true
+
+#      circuitBreaker:
+#        requestVolumeThreshold: 100
