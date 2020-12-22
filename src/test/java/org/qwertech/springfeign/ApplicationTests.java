@@ -1,9 +1,15 @@
 package org.qwertech.springfeign;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.delete;
+import static com.github.tomakehurst.wiremock.client.WireMock.deleteRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
@@ -51,7 +57,7 @@ class ApplicationTests {
   }
 
   @Test
-  void contextLoads() {
+  void ipAddressForwardedToExternalService() {
     String ip = "ip";
     stubFor(get(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(ok("result")));
 
@@ -59,6 +65,42 @@ class ApplicationTests {
 
     verify(1, getRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE))
         .withHeader(RequestUtils.X_FORWARDED_FOR_HTTP_HEADER, containing(ip)));
+  }
+
+  @Test
+  void getRequestRetries() {
+    stubFor(get(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
+
+    RestAssured.given().get(Application.TEST);
+
+    verify(3, getRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
+  }
+
+  @Test
+  void postRequestRetries() {
+    stubFor(post(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
+
+    RestAssured.given().post(Application.TEST);
+
+    verify(1, postRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
+  }
+
+  @Test
+  void putRequestRetries() {
+    stubFor(put(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
+
+    RestAssured.given().put(Application.TEST);
+
+    verify(1, putRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
+  }
+
+  @Test
+  void deleteRequestRetries() {
+    stubFor(delete(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
+
+    RestAssured.given().delete(Application.TEST);
+
+    verify(1, deleteRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
   }
 
 }
