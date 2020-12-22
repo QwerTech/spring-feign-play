@@ -5,6 +5,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.delete;
 import static com.github.tomakehurst.wiremock.client.WireMock.deleteRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.lessThan;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
@@ -95,12 +96,13 @@ class ApplicationTests {
   @Test
   void hystrixBreaksCircuit() {
     stubFor(post(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
+    final int requests = 1000;
 
-    IntStream.range(0, 100).parallel().forEach(i -> {
-      RestAssured.given().post(Application.TEST);
-    });
+    IntStream.range(0, requests)
+        .parallel()
+        .forEach(i -> RestAssured.given().post(Application.TEST));
 
-    verify(10, postRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
+    verify(lessThan(requests), postRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
   }
 
   @Test
