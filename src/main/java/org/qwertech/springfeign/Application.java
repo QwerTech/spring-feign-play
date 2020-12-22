@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,8 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @EnableFeignClients
 @RequiredArgsConstructor
-//@EnableCircuitBreaker
-//@EnableHystrixDashboard
+@EnableCircuitBreaker
 public class Application {
 
   public static final String TEST = "/test";

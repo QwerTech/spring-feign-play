@@ -1,29 +1,30 @@
 server.port: 8085
+spring:
+  application:
+    name: spring-feign-play
 other-service:
   ribbon:
     listOfServers: http://localhost:${wiremock.server.port}
     MaxAutoRetries: 2
     MaxAutoRetriesNextServer: 0
-    retryableStatusCodes: 503, 408
+    retryableStatusCodes: 503, 408, 500
     OkToRetryOnAllOperations: false
-#feign:
-#  hystrix:
-#    enabled: true
+feign:
+  hystrix:
+    enabled: true
 hystrix:
   command:
     default:
       execution:
         isolation:
           strategy: SEMAPHORE
-#          thread:
-#            timeoutInMilliseconds: 5000
-#            readTimeout: 5000
-#      fallback:
-#        isolation:
-#          semaphore:
-#            maxConcurrentRequests: 200
-#            errorThresholdPercentage: 80
-#            forceClosed: true
 
       circuitBreaker:
-        requestVolumeThreshold: 100
+        requestVolumeThreshold: 10
+management:
+  endpoint:
+    metrics.enabled: true
+    prometheus.enabled: true
+    restart.enabled: true
+  endpoints.web.exposure.include: '*'
+  metrics.export.prometheus.enabled: true

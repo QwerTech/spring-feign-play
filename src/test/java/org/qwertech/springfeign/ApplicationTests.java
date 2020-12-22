@@ -18,7 +18,9 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import io.restassured.RestAssured;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,6 +76,31 @@ class ApplicationTests {
     RestAssured.given().get(Application.TEST);
 
     verify(3, getRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
+  }
+
+  @Test
+  void hystrixMetrics() {
+    stubFor(get(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.ok()));
+
+    RestAssured.given().get(Application.TEST);
+    final String metrics = RestAssured.given().get("/actuator/prometheus").getBody().asString();
+
+    Assertions.assertThat(metrics)
+        .contains("hystrix_execution_total",
+            "hystrix_latency_total_seconds_count", "hystrix_latency_total_seconds_sum", "hystrix_latency_total_seconds_max",
+            "hystrix_latency_execution_seconds_count", "hystrix_latency_execution_seconds_sum", "hystrix_latency_execution_seconds_max",
+            "hystrix_circuit_breaker_open{group=\"other-service\",key=\"OtherServiceFeign#testGet()\",}");
+  }
+
+  @Test
+  void hystrixBreaksCircuit() {
+    stubFor(post(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
+
+    IntStream.range(0, 100).parallel().forEach(i -> {
+      RestAssured.given().post(Application.TEST);
+    });
+
+    verify(10, postRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
   }
 
   @Test
