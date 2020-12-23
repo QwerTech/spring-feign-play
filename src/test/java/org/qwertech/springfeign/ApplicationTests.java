@@ -120,7 +120,7 @@ class ApplicationTests {
 
     RestAssured.given().put(Application.TEST);
 
-    verify(1, putRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
+    verify(3, putRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
   }
 
   @Test
