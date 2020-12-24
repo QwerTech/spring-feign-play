@@ -19,12 +19,15 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import io.restassured.RestAssured;
+import io.restassured.config.RestAssuredConfig;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -71,12 +74,32 @@ class ApplicationTests {
   }
 
   @Test
-  void getRequestRetries() {
+  void getRequestRetriesWhen503() {
     stubFor(get(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
 
     RestAssured.given().get(Application.TEST);
 
     verify(3, getRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
+  }
+  @Test
+  @Tag("timeout")
+  @Timeout(5)
+  void getRequestRetriesWhenTimeout() {
+    stubFor(get(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.ok().withFixedDelay(10_000)));
+
+    RestAssured.given().get(Application.TEST).then().statusCode(500);
+
+    verify(3, getRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
+  }
+  @Test
+  @Tag("timeout")
+  @Timeout(1)
+  void postRequestDoNotRetriesWhenTimeout() {
+    stubFor(post(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.ok().withFixedDelay(10_000)));
+
+    RestAssured.given().post(Application.TEST).then().statusCode(500);
+
+    verify(1, postRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
   }
 
   @Test

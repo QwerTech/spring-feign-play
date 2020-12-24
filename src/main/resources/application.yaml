@@ -9,15 +9,27 @@ other-service:
     MaxAutoRetriesNextServer: 0
     retryableStatusCodes: 503, 408, 500
     OkToRetryOnAllOperations: false
+#ribbon:# doesn't work
+#  ReadTimeout: 1000
+#  ConnectTimeout: 1000
 feign:
+  client.config.default:
+    connectTimeout: '100'
+    readTimeout: '1000'
+    loggerLevel: basic
   hystrix:
     enabled: true
 hystrix:
   command:
     default:
+      fallback.enabled: true
       execution:
         isolation:
           strategy: SEMAPHORE
+          thread:
+            timeoutInMilliseconds: 3000
+#          semaphore:
+#            maxConcurrentRequests: 100
 
       circuitBreaker:
         requestVolumeThreshold: 10
@@ -28,3 +40,7 @@ management:
     restart.enabled: true
   endpoints.web.exposure.include: '*'
   metrics.export.prometheus.enabled: true
+
+logging.level.org.qwertech: DEBUG
+logging.level.org.springframework.web.filter: DEBUG
+logging.level.ROOT: INFO
