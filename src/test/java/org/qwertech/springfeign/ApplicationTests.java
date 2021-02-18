@@ -93,7 +93,7 @@ class ApplicationTests {
   }
   @Test
   @Tag("timeout")
-  @Timeout(1)
+  @Timeout(2)
   void postRequestDoNotRetriesWhenTimeout() {
     stubFor(post(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.ok().withFixedDelay(10_000)));
 

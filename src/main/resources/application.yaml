@@ -22,12 +22,14 @@ feign:
 hystrix:
   command:
     default:
-      fallback.enabled: true
+      fallback.enabled: false
       execution:
+        timeout:
+          enabled: false
         isolation:
           strategy: SEMAPHORE
-          thread:
-            timeoutInMilliseconds: 3000
+#          thread: # doesn't need it, because of hystrix.command.default.execution.timeout.enabled
+#            timeoutInMilliseconds: 3000
 #          semaphore:
 #            maxConcurrentRequests: 100
 
