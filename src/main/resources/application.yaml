@@ -2,6 +2,10 @@ server.port: 8085
 spring:
   application:
     name: spring-feign-play
+
+  http:
+    log-request-details: true
+
 other-service:
   ribbon:
     listOfServers: http://localhost:${wiremock.server.port}
@@ -42,6 +46,9 @@ management:
     restart.enabled: true
   endpoints.web.exposure.include: '*'
   metrics.export.prometheus.enabled: true
+  trace:
+    http:
+      include: requestHeaders,responseHeaders,cookieHeaders,authorizationHeader,principal,remoteAddress,sessionId,timeTaken
 
 logging.level.org.qwertech: DEBUG
 logging.level.org.springframework.web.filter: DEBUG

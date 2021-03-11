@@ -23,26 +23,29 @@ import io.restassured.config.RestAssuredConfig;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 @Slf4j
+@RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {Application.class}, initializers = WiremockInitializer.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-class ApplicationTests {
+public class ApplicationTests {
 
   @LocalServerPort
   protected int port;
 
-  @BeforeEach
+  @Before
   public final void initIT() {
     RestAssured.port = port;
   }
@@ -56,45 +59,47 @@ class ApplicationTests {
     WireMock.configureFor(wmPort);
   }
 
-  @AfterEach
+  @After
   public final void resetMocks() {
     Mockito.reset();
     WireMock.reset();
   }
 
   @Test
-  void ipAddressForwardedToExternalService() {
+  public void ipAddressForwardedToExternalService() {
     String ip = "ip";
     stubFor(get(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(ok("result")));
 
-    RestAssured.given().header(RequestUtils.X_FORWARDED_FOR_HTTP_HEADER, ip).get(Application.TEST).then().statusCode(200);
+    RestAssured.given().header(RequestUtils.X_FORWARDED_FOR_HTTP_HEADER, ip)
+        .header(HttpHeaders.AUTHORIZATION, "asd").get(Application.TEST).then().statusCode(200);
 
     verify(1, getRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE))
         .withHeader(RequestUtils.X_FORWARDED_FOR_HTTP_HEADER, containing(ip)));
   }
 
   @Test
-  void getRequestRetriesWhen503() {
+  public void getRequestRetriesWhen503() {
     stubFor(get(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
 
     RestAssured.given().get(Application.TEST);
 
     verify(3, getRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
   }
-  @Test
-  @Tag("timeout")
-  @Timeout(5)
-  void getRequestRetriesWhenTimeout() {
+  public interface Timeout{
+
+  }
+  @Test(timeout = 5_000)
+  @Category(Timeout.class)
+  public void getRequestRetriesWhenTimeout() {
     stubFor(get(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.ok().withFixedDelay(10_000)));
 
     RestAssured.given().get(Application.TEST).then().statusCode(500);
 
     verify(3, getRequestedFor(urlEqualTo(OtherServiceApi.TEST_OTHER_SERVICE)));
   }
-  @Test
-  @Tag("timeout")
-  @Timeout(2)
-  void postRequestDoNotRetriesWhenTimeout() {
+  @Test(timeout = 2_000)
+  @Category(Timeout.class)
+  public void postRequestDoNotRetriesWhenTimeout() {
     stubFor(post(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.ok().withFixedDelay(10_000)));
 
     RestAssured.given().post(Application.TEST).then().statusCode(500);
@@ -103,7 +108,7 @@ class ApplicationTests {
   }
 
   @Test
-  void hystrixMetrics() {
+  public void hystrixMetrics() {
     stubFor(get(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.ok()));
 
     RestAssured.given().get(Application.TEST);
@@ -117,7 +122,7 @@ class ApplicationTests {
   }
 
   @Test
-  void hystrixBreaksCircuit() {
+  public void hystrixBreaksCircuit() {
     stubFor(post(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
     final int requests = 1000;
 
@@ -129,7 +134,7 @@ class ApplicationTests {
   }
 
   @Test
-  void postRequestRetries() {
+  public void postRequestRetries() {
     stubFor(post(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
 
     RestAssured.given().post(Application.TEST);
@@ -138,7 +143,7 @@ class ApplicationTests {
   }
 
   @Test
-  void putRequestRetries() {
+  public void putRequestRetries() {
     stubFor(put(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
 
     RestAssured.given().put(Application.TEST);
@@ -147,7 +152,7 @@ class ApplicationTests {
   }
 
   @Test
-  void deleteRequestRetries() {
+  public void deleteRequestRetries() {
     stubFor(delete(OtherServiceApi.TEST_OTHER_SERVICE).willReturn(WireMock.serviceUnavailable()));
 
     RestAssured.given().delete(Application.TEST);

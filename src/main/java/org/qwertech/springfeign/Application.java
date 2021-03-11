@@ -23,6 +23,13 @@ import org.springframework.web.filter.CommonsRequestLoggingFilter;
 @EnableCircuitBreaker
 public class Application {
 
+  public static final String TEST = "/test";
+  private final OtherServiceApi otherServiceApi;
+
+  public static void main(String[] args) {
+    SpringApplication.run(Application.class, args);
+  }
+
   @Bean
   public CommonsRequestLoggingFilter requestLoggingFilter() {
     CommonsRequestLoggingFilter loggingFilter = new CommonsRequestLoggingFilter();
@@ -33,9 +40,6 @@ public class Application {
 //    loggingFilter.setIncludeHeaders(true);
     return loggingFilter;
   }
-
-  public static final String TEST = "/test";
-  private final OtherServiceApi otherServiceApi;
 
   @GetMapping(TEST)
   public ResponseEntity<String> testGet() {
@@ -55,10 +59,6 @@ public class Application {
   @DeleteMapping(TEST)
   public ResponseEntity<String> testDelete() {
     return otherServiceApi.testDelete();
-  }
-
-  public static void main(String[] args) {
-    SpringApplication.run(Application.class, args);
   }
 
 
